@@ -1,0 +1,234 @@
+package com.hbase.test;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTablePool;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.Bytes.RowEndKeyComparator;
+
+/*
+ *hbase的基本操作 
+ */
+public class HbaseTest {
+
+	public static Configuration configuration = null;
+	
+	static{
+		configuration = HBaseConfiguration.create();
+	}
+	
+	public static void main(String args[]){
+		
+	}
+	
+	/*
+	 * 创建hbase数据库
+	 */
+	public static void createTable(String tableName){
+		System.out.println("start create table ......");
+		try{
+			HBaseAdmin hBaseAdmin = new HBaseAdmin(configuration);
+			if(hBaseAdmin.tableExists(tableName)){
+				hBaseAdmin.disableTable(tableName);
+				hBaseAdmin.deleteTable(tableName);
+				System.out.println(tableName + "is exist,detele......");
+			}
+			HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
+			tableDescriptor.addFamily(new HColumnDescriptor("column1"));
+			tableDescriptor.addFamily(new HColumnDescriptor("column2"));
+			tableDescriptor.addFamily(new HColumnDescriptor("column3"));
+			hBaseAdmin.createTable(tableDescriptor);
+		}catch(MasterNotRunningException e){
+			e.printStackTrace();
+		}catch (ZooKeeperConnectionException e) {
+			e.printStackTrace();
+		}catch (IOException e) {
+			e.printStackTrace();
+		}
+		System.out.println("end create table ......");
+	}
+	
+	
+	/*
+	 * 插入数据
+	 */
+	public static void insertData(String tableName){
+		System.out.println("start insert data ......");
+		
+		//HTablePool pool = new HTablePool(configuration, 1000);  使用了表的链接池 
+		//HTable table = (HTable)pool.getTable(tableName);  
+		HTable table = null;
+		try {
+			table = new HTable(configuration, "HbaseTest");
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		Put put = new Put("112233bbbcccc".getBytes());
+		//一个put代表一行数据，再new一个put表示第二行数据，每行一个唯一的RowKey，此处rowkey为put构造方法中传入的值
+		 ); //本行数据的第二列
+		put.add("column3".getBytes(), null, "ccc".getBytes()); //本行数据的第三列
+		try{
+			//table.table(List<Put> arg0)  --List的put值
+			table.put(put);
+		}catch(IOException e){
+			e.printStackTrace();
+		}
+		System.out.println("end insert data ......");
+	}
+	
+	/*
+	 * 删除表
+	 */
+	public static void dropTable(String tableName){
+		try{
+			HBaseAdmin admin = new HBaseAdmin(configuration);
+			admin.disableTable(tableName);
+			admin.deleteTable(tableName);
+		}catch(MasterNotRunningException e){
+			e.printStackTrace();
+		}catch (ZooKeeperConnectionException e) {
+			e.printStackTrace();
+		}catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+	/*
+	 * 按照RowKey删除行数据
+	 */
+	public static void deleteRow(String tableName,String rowKey){
+		try{
+			HTable table = new HTable(configuration, tableName);
+			List<Delete> list = new ArrayList<>();
+			Delete d1 = new Delete(rowKey.getBytes());
+			list.add(d1);
+			//table.delete(d1); //单个
+			table.delete(list); // List
+			
+			System.out.println("删除行成功");
+		}catch(IOException e){
+			e.printStackTrace();
+		}
+	}
+	
+	/*
+	 * 查询所有数据
+	 */
+	
+	public static void queryAll(String tableName){
+		HTablePool pool = new HTablePool(configuration, 1000);
+		HTable table = (HTable)pool.getTable(tableName);
+		try{
+			ResultScanner rs = table.getScanner(new Scan());
+			for(Result r : rs){
+				System.out.println("获得rowkey:" + new String(r.getRow()));
+				for(KeyValue keyvalue : r.raw()){
+					System.out.println("列：" + new String(keyvalue.getFamily()) + "====值" + new String(keyvalue.getValue()));
+				}
+			} 
+		}catch(IOException e){
+			e.printStackTrace();
+		}
+	}
+	
+	/*
+	 * 根据RowKey查询数据
+	 */
+	public static void QueryByCondition1(String tableName){
+		HTablePool pool = new HTablePool(configuration,1000);
+		HTable table = (HTable)pool.getTable(tableName);
+		try{
+			Get scan = new Get("abcdef".getBytes()); // 根据rowkey查询
+			Result r = table.get(scan);
+			System.out.println("获得到rowkey:" + new String(r.getRow()));
+			for(KeyValue keyvalue : r.raw()){
+				System.out.println("列：" + new String(keyvalue.getFamily()) + "===值" + new String(keyvalue.getValue()));
+			}
+
+		}catch(IOException e){
+			e.printStackTrace();
+		}
+	}	
+	
+	/*
+	 * 条件查询
+	 */
+	public static void QueryByCondition2(String tableName){
+		try{
+			HTablePool pool = new HTablePool(configuration, 1000);
+			HTable table = (HTable)pool.getTable(tableName);
+			Filter filter = new SingleColumnValueFilter(Bytes.toBytes("column1"), null, CompareOp.EQUAL, Bytes.toBytes("aaa")); //当列column1值为aaa时进行查询
+			Scan s = new Scan();
+			s.setFilter(filter);
+			ResultScanner rs = table.getScanner(s);
+			for(Result r : rs){
+				System.out.println("获得rowkey:" + new String(r.getRow()));
+				for(KeyValue keyvalue : r.raw()){
+					System.out.println("列：" + new String(keyvalue.getFamily()) + "===值" + new String(keyvalue.getValue()));
+				}
+			}
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/*
+	 * 条件查询3
+	 */
+	public static void QueryByCondition3(String tableName){
+		try{
+			HTablePool pool = new HTablePool(configuration, 1000);
+			HTable table = (HTable)pool.getTable(tableName);
+			
+			List<Filter> filters = new ArrayList<>();
+			Filter filter1 = new SingleColumnValueFilter(Bytes.toBytes("column1"), null, CompareOp.EQUAL, Bytes.toBytes("aaa"));
+			filters.add(filter1);
+			
+			Filter filter2 = new SingleColumnValueFilter(Bytes.toBytes("column2"), null, CompareOp.EQUAL, Bytes.toBytes("bbb"));
+			filters.add(filter2);
+			
+			Filter filter3 = new SingleColumnValueFilter(Bytes.toBytes("column3"), null, CompareOp.EQUAL, Bytes.toBytes("ccc"));
+			filters.add(filter3);
+			
+			FilterList filterList1 = new FilterList(filters);
+			
+			Scan scan = new Scan();
+			scan.setFilter(filterList1);
+			ResultScanner rs = table.getScanner(scan);
+			for(Result r : rs){
+				System.out.println("获得到rowkey:" + new String(r.getRow()));
+				for(KeyValue keyvalue : r.raw()){
+					System.out.println("列：" + new String(keyvalue.getFamily()) + "===值" + new String(keyvalue.getValue()));
+				}
+			}
+			rs.close();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+}
