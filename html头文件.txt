@@ -1,0 +1,16 @@
+CTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script type='text/javascript' src='/ml_W_studyPlan_001/js/jquery-3.1.0.min.js'></script>
+<link type='text/css' rel='stylesheet' href='/ml_W_studyPlan_001/css/ml.css'/>
+</head>
+<body>
+	<div>
+		<div></div>
+		<div></div>
+	</div>
+</body>
+</html>
+

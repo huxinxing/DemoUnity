@@ -1,0 +1,53 @@
+package com.ml.kafka;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
+import kafka.consumer.Consumer;
+import kafka.consumer.ConsumerConfig;
+import kafka.consumer.ConsumerIterator;
+import kafka.consumer.KafkaStream;
+import kafka.javaapi.consumer.ConsumerConnector;
+
+public class KafkaConsumer {
+	
+	private Properties prop = new Properties();
+	private ConsumerConfig consumerConfig = null;
+	private String topic = null;
+	private ConsumerConnector consumer = null;
+	
+	public KafkaConsumer(){
+		Properties props = new Properties();
+		try {
+			props.load(new InputStreamReader(KafkaConsumer.class.getClassLoader().getResourceAsStream("kafka.properties"), "UTF-8"));
+			prop.put("zookeeper.connect", props.getProperty("zookeeper.connect"));
+			prop.put("auto.commit.enable", props.getProperty("auto.commit.enable"));
+			prop.put("auto.commit.interval.ms", props.getProperty("auto.commit.interval.ms"));
+			prop.put("group.id", props.getProperty("group.id"));
+			topic = props.getProperty("topic");
+			consumerConfig = new ConsumerConfig(prop);
+			consumer = Consumer.createJavaConsumerConnector(consumerConfig);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void mainConsumer(int num){
+		Map<String, Integer> topicCountMap = new HashMap<>();
+		topicCountMap.put(topic, new Integer(num));
+		Map<String,List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
+		List<KafkaStream<byte[], byte[]>> stream = consumerMap.get(topic);
+		for(int i = 0; i < stream.size(); i++){
+			ConsumerIterator<byte[], byte[]> it = stream.get(i).iterator();
+			while(it.hasNext()){
+				System.out.println(new String(it.next().message()));
+			}
+		}
+	}
+	
+}

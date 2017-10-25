@@ -1,0 +1,13 @@
+2、Servlet获取参数方式
+	2.1获取用户名和密码为例：比如说
+		String username = request.getParameter(“username”);
+		String password = request.getParameter(“password”);
+	2.2为防止参数出现乱码，比如说
+		String value = request.getParameter(“username”);
+		String values = new String(value.getBytes(“iso-8859-1”),”utf-8”);
+		或者
+		request.setCharacterEncoding(“utf-8”);
+		String value = request.getParameter(“username”);
+3、servlet 使用ajax 返回参数
+	PrintWriter out = response.getWriter();
+	Out.writer(“返回的参数字符串”);

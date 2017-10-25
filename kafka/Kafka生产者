@@ -1,0 +1,51 @@
+package com.ml.kafka;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Properties;
+
+import kafka.javaapi.producer.Producer;
+import kafka.producer.KeyedMessage;
+import kafka.producer.ProducerConfig;
+
+public class KafkaProductor {
+	
+	private Properties props = new Properties();
+	private ProducerConfig producerConfig = null;
+	
+	public KafkaProductor(){
+		try{
+			props.load(new InputStreamReader(KafkaProductor.class.getClassLoader().getResourceAsStream("kafka.properties"), "UTF-8"));
+			Properties prop = new Properties();
+			prop.put("zookeeper.connect", props.getProperty("zookeeper.connect"));
+			prop.put("metadata.broker.list", props.getProperty("metadata.broker.list"));
+			prop.put("serializer.class", props.getProperty("serializer.class"));
+			producerConfig = new ProducerConfig(prop);
+		}catch(IOException e){
+			e.printStackTrace();
+		}
+	}
+	
+	public void createMessage(String message){
+		Producer<String, String> producer = new Producer<>(producerConfig);
+		while(true){
+			KeyedMessage<String, String> keyedMessage = new KeyedMessage<String, String>(props.getProperty("topic").toString(), message);
+			producer.send(keyedMessage);
+			try{
+				Thread.sleep(100);
+			}catch(InterruptedException e){
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+}

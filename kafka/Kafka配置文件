@@ -1,0 +1,8 @@
+topic = xxxx;
+zookeeper.connect = huxinxing:2181,huxinxing2182,huxinxing:2183
+metadata.broker.list=huxinxing:9092,huxinxing:9093,huxinxing:9094
+serializer.class=kafka.serializer.StringEncoder
+
+auto.commit.enable=true
+auto.commit.interval.ms=60000
+group.id = test_msg1
