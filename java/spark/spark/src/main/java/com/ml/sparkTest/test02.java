@@ -12,7 +12,6 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.api.java.function.PairFunction;
 
 import scala.Tuple2;
@@ -42,6 +41,23 @@ public class test02 {
 			}
 		});
  		
+ 		JavaRDD<Integer> lineLengths = lines.map(new Function<String, Integer>() {
+
+			@Override
+			public Integer call(String s) throws Exception {
+				// TODO Auto-generated method stub
+				return s.length();
+			}
+		});
+ 		
+ 		Integer totatl = lineLengths.reduce(new Function2<Integer, Integer, Integer>() {
+			
+			@Override
+			public Integer call(Integer i1, Integer i2) throws Exception {
+				// TODO Auto-generated method stub
+				return i1 + i2;
+			}
+		});
  		
  		System.out.println("--------------------next filter's result------------------");
  		
@@ -74,6 +90,7 @@ public class test02 {
 		}
  		
  		
+ 		
  		System.out.println("------------------spark键值对------------------");
  		JavaPairRDD<String, Integer> ones = words.mapToPair(new PairFunction<String, String, Integer>() {
 
@@ -84,6 +101,7 @@ public class test02 {
 				return new Tuple2<String, Integer>(s, 1);
 			}
 		});
+ 		
  		
  		Map<String, Integer> map =  ones.collectAsMap();
  		

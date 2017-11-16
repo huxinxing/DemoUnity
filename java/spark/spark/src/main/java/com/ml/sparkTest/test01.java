@@ -23,7 +23,7 @@ public class test01 {
 	public void RDDOperator(){
 		
 		
-		SparkConf conf = new SparkConf().setAppName("ConnectionSpark").setMaster("local");
+		SparkConf conf = new SparkConf().setAppName("ConnectionSpark").setMaster("spark://ml:7077");
 		JavaSparkContext sc = new JavaSparkContext(conf);
 		
 		JavaRDD<String> lines = sc.textFile("source/people.txt");
